@@ -4,10 +4,13 @@ const { Op, where } = require("sequelize");
 async function createUser(req, res) {
   try {
     await db.user.create({
-      category_name: req.body.category_name,
+      email: req.body.email,
+      password: req.body.password,
+      surname: req.body.surname,
       name: req.body.name,
-      ingredients: req.body.ingredients,
-      price: req.body.price,
+      patronymic: req.body.patronymic,
+      phone: req.body.phone,
+      roll: req.body.roll,
     });
     return res.send({ success: true });
   } catch (err) { return res.send({ success: false, err }); }
@@ -18,18 +21,19 @@ async function readUsers(req, res) {
     let { count, rows } = await db.user.findAndCountAll();
 
     return res.send({ success: true, count, rows });
-  } catch (e) {
-    return res.send({ success: false });
-  }
+  } catch (err) { return res.send({ success: false, err }); }
 };
 
 async function updateUser(req, res) {
   try {
     const updatingOptions = {
-      category_name: req.body.category_name,
+      email: req.body.email,
+      password: req.body.password,
+      surname: req.body.surname,
       name: req.body.name,
-      ingredients: req.body.ingredients,
-      price: req.body.price,
+      patronymic: req.body.patronymic,
+      phone: req.body.phone,
+      roll: req.body.roll,
     };
 
     await db.user.update(updatingOptions, {
@@ -38,7 +42,7 @@ async function updateUser(req, res) {
       },
     });
     return res.send({ success: true });
-  } catch (err) { return res.send({ success: false }); }
+  } catch (err) { return res.send({ success: false, err }); }
 };
 
 async function deleteUser(req, res) {
@@ -50,9 +54,7 @@ async function deleteUser(req, res) {
     });
 
     return res.send({ success: true });
-  } catch (e) {
-    return res.send({ success: false });
-  }
+  } catch (err) { return res.send({ success: false, err }); }
 };
 
 module.exports = {

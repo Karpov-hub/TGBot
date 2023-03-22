@@ -29,7 +29,7 @@ module.exports = {
       phone: {
         type: Sequelize.STRING(20)
       },
-      role: {
+      roll: {
         type: Sequelize.INTEGER
       },
     });

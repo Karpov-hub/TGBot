@@ -13,8 +13,6 @@ ALTER ROLE hse WITH LOGIN;
 
 ALTER ROLE hse WITH PASSWORD 'hse';
 
-GRANT ALL PRIVILEGES ON DATABASE "scdb" to hse;
-
 ```
 
 ### Create database scdb
@@ -33,5 +31,4 @@ GRANT ALL PRIVILEGES ON DATABASE "scdb" to hse;
 ```
 cd BE/db
 npx sequelize-cli db:migrate
-npx sequelize-cli db:seed:all
 ```

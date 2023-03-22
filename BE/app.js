@@ -7,8 +7,8 @@ app.use(bodyParser.json({ limit: "8mb" }));
 app.use(bodyParser.urlencoded({ limit: "8mb", extended: true }));
 
 
-const productRouter = require("../BE/routers/productRouter");
-app.use("/product", productRouter);
+const userRouter = require("../BE/routers/userRouter");
+app.use("/user", userRouter);
 
 app.listen(port, () => {
   console.log(`App listen port: http://localhost:${port}`);
