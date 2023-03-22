@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "hse",
+    "password": "hse",
+    "database": "hfdb",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "hse",
+    "password": "hse",
+    "database": "hfdb",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "hse",
+    "password": "hse",
+    "database": "hfdb",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  }
+}
