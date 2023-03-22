@@ -6,10 +6,19 @@
   <title>Авторизация/Регистрация</title>
 
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.2.1/axios.min.js"></script>
+  <script>
 
+  </script>
   <link rel="stylesheet" href="css/style.css">
-
-
+  <script>
+    function handleRequest() {
+      axios.post("url", { name: "data" }).then(function (response) {
+        console.log(response)
+        // do whatever you want if console is [object object] then stringify the response
+      })
+    }
+  </script>
 </head>
 
 <body>
@@ -91,7 +100,7 @@
   <script src='http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.14/angular.min.js'></script>
 
   <script src="js/index.js"></script>
-
+  <script src="js/axios.js"></script>
 </body>
 
 </html>
