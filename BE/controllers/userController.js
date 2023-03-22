@@ -1,9 +1,9 @@
 const db = require("../db/models/index");
 const { Op, where } = require("sequelize");
 
-async function createProduct(req, res) {
+async function createUser(req, res) {
   try {
-    await db.product.create({
+    await db.user.create({
       category_name: req.body.category_name,
       name: req.body.name,
       ingredients: req.body.ingredients,
@@ -13,9 +13,9 @@ async function createProduct(req, res) {
   } catch (err) { return res.send({ success: false, err }); }
 };
 
-async function readProducts(req, res) {
+async function readUsers(req, res) {
   try {
-    let { count, rows } = await db.product.findAndCountAll();
+    let { count, rows } = await db.user.findAndCountAll();
 
     return res.send({ success: true, count, rows });
   } catch (e) {
@@ -23,7 +23,7 @@ async function readProducts(req, res) {
   }
 };
 
-async function updateProduct(req, res) {
+async function updateUser(req, res) {
   try {
     const updatingOptions = {
       category_name: req.body.category_name,
@@ -32,7 +32,7 @@ async function updateProduct(req, res) {
       price: req.body.price,
     };
 
-    await db.product.update(updatingOptions, {
+    await db.user.update(updatingOptions, {
       where: {
         id: req.body.id,
       },
@@ -41,9 +41,9 @@ async function updateProduct(req, res) {
   } catch (err) { return res.send({ success: false }); }
 };
 
-async function deleteProduct(req, res) {
+async function deleteUser(req, res) {
   try {
-    await db.product.destroy({
+    await db.user.destroy({
       where: {
         id: req.body.id
       }
@@ -56,8 +56,8 @@ async function deleteProduct(req, res) {
 };
 
 module.exports = {
-  createProduct,
-  readProducts,
-  updateProduct,
-  deleteProduct,
+  createUser,
+  readUsers,
+  updateUser,
+  deleteUser,
 };
