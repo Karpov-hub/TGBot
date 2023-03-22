@@ -1,4 +1,4 @@
-# HealthyFood BE
+# SportsClub BE
 
 ## DB
 
@@ -13,18 +13,18 @@ ALTER ROLE hse WITH LOGIN;
 
 ALTER ROLE hse WITH PASSWORD 'hse';
 
-GRANT ALL PRIVILEGES ON DATABASE "hfdb" to hse;
+GRANT ALL PRIVILEGES ON DATABASE "scdb" to hse;
 
 ```
 
-### Create database hfdb
+### Create database scdb
 
 ```
 sudo -u postgres psql
 
-create database hfdb;
+create database scdb;
 
-GRANT ALL PRIVILEGES ON DATABASE "hfdb" to hse;
+GRANT ALL PRIVILEGES ON DATABASE "scdb" to hse;
 
 ```
 

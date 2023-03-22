@@ -1,17 +1,17 @@
-# HealthyFood
+# SportsClub
 
 ## Install on local host
 
 Clone mono repo
 
 ```
-git clone git@github.com:Karpov-hub/zoo-node.git
+git clone git@github.com:Karpov-hub/sports-club.git
 ```
 
 or
 
 ```
-git clone https://github.com/Karpov-hub/zoo-node.git
+git clone https://github.com/Karpov-hub/sports-club.git
 ```
 
 Install yarn
