@@ -3,6 +3,17 @@ const { Op, where } = require("sequelize");
 
 async function createUser(req, res) {
   try {
+    let existUser = await db.user.findOne({
+      where: { email: req.body.email },
+    attributes: ["id"]
+    });
+    if (existUser) {
+      return res.send({
+        code: "EMAILALREADYREGISTERED",
+        message: "Sorry, you can't sign up with this email id"
+      });
+    }
+
     await db.user.create({
       email: req.body.email,
       password: req.body.password,
