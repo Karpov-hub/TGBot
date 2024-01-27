@@ -1,3 +1,0 @@
-# SportsClub FE
-
-абоба бебра
