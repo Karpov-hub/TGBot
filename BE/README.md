@@ -1,4 +1,4 @@
-# SportsClub BE
+# TGBot BE
 
 ## DB
 
@@ -15,14 +15,14 @@ ALTER ROLE hse WITH PASSWORD 'hse';
 
 ```
 
-### Create database scdb
+### Create database tbdb
 
 ```
 sudo -u postgres psql
 
-create database scdb;
+create database tbdb;
 
-GRANT ALL PRIVILEGES ON DATABASE "scdb" to hse;
+GRANT ALL PRIVILEGES ON DATABASE "tbdb" to hse;
 
 ```
 
@@ -32,7 +32,8 @@ GRANT ALL PRIVILEGES ON DATABASE "scdb" to hse;
 cd BE/db
 npx sequelize-cli db:migrate
 ```
-# SportsClub
+
+# TGBot
 
 ## Install on local host
 
