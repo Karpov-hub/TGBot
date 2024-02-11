@@ -24,7 +24,7 @@ module.exports = {
         defaultValue: null,
       },
       departed_location: {
-        type: Sequelize.STRING, // Геопозиция места, куда мастер выехал
+        type: Sequelize.STRING, // Геопозиция места, откуда мастер выехал
         defaultValue: null,
       },
       started_at: {
