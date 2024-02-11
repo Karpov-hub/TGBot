@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
       request_date: DataTypes.DATE,
       address: DataTypes.STRING,
       client_phone: DataTypes.STRING,
-      meeting_time: DataTypes.TIME,
+      meeting_time: DataTypes.STRING,
       comment: DataTypes.TEXT,
       brand: DataTypes.STRING,
       product_type: DataTypes.STRING,
