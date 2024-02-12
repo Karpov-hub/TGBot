@@ -51,27 +51,27 @@ async function readNewUsers(req, res) {
   }
 }
 
-// async function updateUser(req, res) {
-//   try {
-//     const updatingOptions = {
-//       surname: req.body.surname,
-//       name: req.body.name,
-//       patronymic: req.body.patronymic,
-//       phone: req.body.phone,
-//       passport_photo: req.body.passport_photo,
-//       status: req.body.status,
-//     };
+async function updateUser(req, res) {
+  try {
+    const updatingOptions = {
+      surname: req.body.surname,
+      name: req.body.name,
+      patronymic: req.body.patronymic,
+      phone: req.body.phone,
+      passport_photo: req.body.passport_photo,
+      status: req.body.status,
+    };
 
-//     await db.user.update(updatingOptions, {
-//       where: {
-//         id: req.body.id,
-//       },
-//     });
-//     return res.send({ success: true });
-//   } catch (err) {
-//     return res.send({ success: false, err });
-//   }
-// }
+    await db.user.update(updatingOptions, {
+      where: {
+        id: req.body.id,
+      },
+    });
+    return res.send({ success: true });
+  } catch (err) {
+    return res.send({ success: false, err });
+  }
+}
 
 async function regUser(req, res) {
   try {
@@ -112,7 +112,7 @@ module.exports = {
   // createUser,
   readUsers,
   readNewUsers,
-  // updateUser,
+  updateUser,
   regUser,
   // deleteUser,
 };

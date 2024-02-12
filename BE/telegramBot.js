@@ -59,6 +59,13 @@ async function getOrderDate(orderId) {
     return false;
   }
 }
+async function getOrderIdText(messageText) {
+  const idMatch = messageText.match(
+    /ID: \s*([a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12})/i
+  );
+  // Получить значение id из результатов сопоставления
+  return idMatch ? idMatch[1] : null;
+}
 
 //Телеграм АПИ
 // Обработчик нажатия на кнопки
@@ -66,36 +73,69 @@ bot.on("callback_query", async (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
   const messageId = callbackQuery.message.message_id;
   const data = callbackQuery.data;
+  const messageText = callbackQuery.message.text;
+
+  const orderId = await getOrderIdText(messageText);
 
   // Проверяем, что нажата кнопка "Принять"
-  if (data.startsWith("accept_order_")) {
-    const orderId = data.split("_")[2]; // Получаем идентификатор заказа из callback_data
-    await buttonDeparted(orderId, chatId, messageId, data);
+  if (data.startsWith("accept_order")) {
+    await buttonDeparted(orderId, chatId, messageId);
   }
   // Проверяем, что нажата кнопка "выехал"
-  if (data.startsWith("departed__")) {
-    const orderId = data.split("_")[2];
-    await buttonGeoDeparted(orderId, chatId, messageId, data);
+  else if (data.startsWith("departed")) {
+    await buttonGeoDeparted(orderId, chatId, messageId);
   }
   // Проверяем, что нажата кнопка "геопозиция выехал"
-  if (data.startsWith("geo_departed_")) {
-    const orderId = data.split("_")[2];
-    await buttonStartWork(orderId, chatId, messageId, data);
+  else if (data.startsWith("geo_departed")) {
+    await buttonStartWork(orderId, chatId, messageId);
   }
   // Проверяем, что нажата кнопка "Начал"
-  if (data.startsWith("star_work_")) {
-    const orderId = data.split("_")[2];
+  else if (data.startsWith("star_work")) {
     await buttonGeoStartWork(orderId, chatId, messageId, data);
   }
 });
+// Обработчик события "location"
+bot.on("location", async (msg) => {
+  try {
+    const chatId = msg.chat.id;
+    const location = msg.location;
+    const orderId = await getOrderIdText(msg.reply_to_message.text);
+    const orderData = await getOrderDate(orderId);
+
+    //гео выехал (до времени начала)
+    if (!orderData.orderData.started_at) {
+      await updateOrder(orderId, {
+        departed_location: location.toString(),
+      });
+      await buttonStartWork(orderId, chatId, msg.message_id);
+    }
+    //гео начал (до получ задатка)
+    else if (!orderData.orderData.deposit_amount) {
+      await updateOrder(orderId, {
+        started_location: location.toString(),
+      });
+      await buttonPushDeposit(orderId, chatId, msg.message_id);
+    }
+    //гео закончил (до до суммы  закрытия)
+    else if (!orderData.orderData.deposit_amount) {
+      await updateOrder(orderId, {
+        started_location: location.toString(),
+      });
+      // await buttonStartWork(orderId, chatId, msg.message_id);
+    }
+  } catch (error) {
+    console.error("Ошибка при обработке местоположения:", error);
+  }
+});
+
 async function sendOrderToMaster(chatId, name, surname, orderData) {
   try {
     // Формируем текст сообщения с данными заказа
-    const message = `Адрес: ${orderData.address}\nТелефон клиента: ${orderData.client_phone}\nВремя встречи: ${orderData.meeting_time}\nМарка: ${orderData.brand}\nТип техники: ${orderData.product_type}\nМастер: ${surname} ${name}`;
+    const message = `ID: ${orderData.id}\nАдрес: ${orderData.address}\nТелефон клиента: ${orderData.client_phone}\nВремя встречи: ${orderData.meeting_time}\nМарка: ${orderData.brand}\nТип техники: ${orderData.product_type}\nМастер: ${surname} ${name}`;
     // Создаем кнопку "Принять"
     const acceptButton = {
       text: "Принять",
-      callback_data: `accept_order_${orderData.id}`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
+      callback_data: `accept_order`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
     };
 
     // Формируем клавиатуру с кнопкой
@@ -110,7 +150,7 @@ async function sendOrderToMaster(chatId, name, surname, orderData) {
   }
 }
 // Обработчик нажатия на кнопку "Выехал"
-async function buttonDeparted(orderId, chatId, messageId, data) {
+async function buttonDeparted(orderId, chatId, messageId) {
   try {
     // Вызываем функцию обновления заказа
     await updateOrder(orderId, {
@@ -121,19 +161,20 @@ async function buttonDeparted(orderId, chatId, messageId, data) {
     bot.deleteMessage(chatId, messageId);
 
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
-    const message = `Адрес: ${data.orderData.address}\nТелефон клиента: ${
-      data.orderData.client_phone
-    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
-      data.orderData.brand
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\nАдрес: ${
+      data.orderData.address
+    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
+      data.orderData.meeting_time
+    }\nМарка: ${data.orderData.brand}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
     } ${data.masterData.name}`;
+
     // Создаем кнопку "Выехал"
     const acceptButton = {
       text: "Выехал",
-      callback_data: `departed__${data.orderData.id}`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
+      callback_data: `departed`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
     };
 
     // Формируем клавиатуру с кнопкой
@@ -148,7 +189,7 @@ async function buttonDeparted(orderId, chatId, messageId, data) {
   }
 }
 // Обработчик нажатия на кнопку "Гео выехал"
-async function buttonGeoDeparted(orderId, chatId, messageId, data) {
+async function buttonGeoDeparted(orderId, chatId, messageId) {
   try {
     // Вызываем функцию обновления заказа
     await updateOrder(orderId, {
@@ -158,27 +199,27 @@ async function buttonGeoDeparted(orderId, chatId, messageId, data) {
     const data = await getOrderDate(orderId);
     // Удаляем инлайн-клавиатуру после нажатия на кнопку
     bot.deleteMessage(chatId, messageId);
-
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
-    const message = `Адрес: ${data.orderData.address}\nТелефон клиента: ${
-      data.orderData.client_phone
-    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
-      data.orderData.brand
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\nАдрес: ${
+      data.orderData.address
+    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
+      data.orderData.meeting_time
+    }\nМарка: ${data.orderData.brand}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
     } ${data.masterData.name}`;
 
-    // Создаем кнопку "Геопозиция"
-    const acceptButton = {
-      text: "Геопозиция",
-      callback_data: `geo_departed_${data.orderData.id}`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
+    const requestLocationButton = {
+      text: "Отправить геопозицию",
+      request_location: true, // Это свойство запрашивает у пользователя его текущую геопозицию
     };
 
-    // Формируем клавиатуру с кнопкой
+    // Формируем клавиатуру с кнопкой для запроса геопозиции
     const keyboard = {
-      inline_keyboard: [[acceptButton]],
+      resize_keyboard: true,
+      one_time_keyboard: true,
+      keyboard: [[requestLocationButton]],
     };
 
     // Отправляем сообщение мастеру с клавиатурой
@@ -188,22 +229,18 @@ async function buttonGeoDeparted(orderId, chatId, messageId, data) {
   }
 }
 // Обработчик нажатия на кнопку "Начал"
-async function buttonStartWork(orderId, chatId, messageId, data) {
+async function buttonStartWork(orderId, chatId, messageId) {
   try {
-    // Вызываем функцию обновления заказа
-    // await updateOrder(orderId, {
-    //   // departed_location: new Date(), //здесь должно быть указание гео
-    // });
     const data = await getOrderDate(orderId);
     // Удаляем инлайн-клавиатуру после нажатия на кнопку
     bot.deleteMessage(chatId, messageId);
 
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
-    const message = `Адрес: ${data.orderData.address}\nТелефон клиента: ${
-      data.orderData.client_phone
-    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
-      data.orderData.brand
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\nАдрес: ${
+      data.orderData.address
+    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
+      data.orderData.meeting_time
+    }\nМарка: ${data.orderData.brand}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
@@ -212,7 +249,7 @@ async function buttonStartWork(orderId, chatId, messageId, data) {
     // Создаем кнопку "Начал"
     const acceptButton = {
       text: "Начал",
-      callback_data: `star_work_${data.orderData.id}`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
+      callback_data: `star_work`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
     };
 
     // Формируем клавиатуру с кнопкой
@@ -227,35 +264,68 @@ async function buttonStartWork(orderId, chatId, messageId, data) {
   }
 }
 // Обработчик нажатия на кнопку "отправить геопозицию начал"
-async function buttonGeoStartWork(orderId, chatId, messageId, data) {
+async function buttonGeoStartWork(orderId, chatId, messageId) {
   try {
     // Вызываем функцию обновления заказа
     await updateOrder(orderId, {
       started_at: new Date(),
     });
-    // // Вызываем функцию обновления заказа
-    // await updateOrder(orderId, {
-    //   // started_location: new Date(),
-    // });
 
     const data = await getOrderDate(orderId);
     // Удаляем инлайн-клавиатуру после нажатия на кнопку
     bot.deleteMessage(chatId, messageId);
 
-    const message = `Адрес: ${data.orderData.address}\nТелефон клиента: ${
-      data.orderData.client_phone
-    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
-      data.orderData.brand
-    }\nТип техники: ${
+    // Отправляем сообщение мастеру о начале заказа с данными из заказа
+    const message = `ID: ${data.orderData.id}\nАдрес: ${
+      data.orderData.address
+    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
+      data.orderData.meeting_time
+    }\nМарка: ${data.orderData.brand}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
     } ${data.masterData.name}`;
 
-    // Создаем кнопку "Геопозиция"
+    const requestLocationButton = {
+      text: "Отправить геопозицию",
+      request_location: true, // Это свойство запрашивает у пользователя его текущую геопозицию
+    };
+
+    // Формируем клавиатуру с кнопкой для запроса геопозиции
+    const keyboard = {
+      resize_keyboard: true,
+      one_time_keyboard: true,
+      keyboard: [[requestLocationButton]],
+    };
+
+    // Отправляем сообщение мастеру с клавиатурой
+    await bot.sendMessage(chatId, message, { reply_markup: keyboard });
+  } catch (error) {
+    console.error("Ошибка при отправке сообщения мастеру:", error);
+  }
+}
+// Обработчик нажатия на кнопку "Задаток"
+async function buttonPushDeposit(orderId, chatId, messageId) {
+  try {
+    const data = await getOrderDate(orderId);
+    // Удаляем инлайн-клавиатуру после нажатия на кнопку
+    bot.deleteMessage(chatId, messageId);
+
+    // Отправляем сообщение мастеру о начале заказа с данными из заказа
+    const message = `ID: ${data.orderData.id}\nАдрес: ${
+      data.orderData.address
+    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
+      data.orderData.meeting_time
+    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+      data.orderData.product_type
+    }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nМастер: ${
+      data.masterData.surname
+    } ${data.masterData.name}`;
+
+    // Создаем кнопку "Задаток"
     const acceptButton = {
-      text: "Геопозиция",
-      callback_data: `star_work_${data.orderData.id}`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
+      text: "Задаток",
+      callback_data: `star_work`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
     };
 
     // Формируем клавиатуру с кнопкой
@@ -269,13 +339,14 @@ async function buttonGeoStartWork(orderId, chatId, messageId, data) {
     console.error("Ошибка при отправке сообщения мастеру:", error);
   }
 }
+
 // Обработчик команды /start - регистрация нового мастера
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   const userCreated = await createUser(chatId);
 
   if (userCreated === true) {
-    bot.sendMessage(chatId, "Привет! Я бот. Как я могу вам помочь?");
+    bot.sendMessage(chatId, "Добро пожаловать! Я бот.");
   } else if (userCreated && userCreated.code === "CHATALREADYREGISTERED") {
     bot.sendMessage(chatId, userCreated.message);
   } else {
