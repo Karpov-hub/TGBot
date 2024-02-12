@@ -3,6 +3,29 @@ const db = require("./db/models/index");
 const { Op, where } = require("sequelize");
 const token = "6883415167:AAFQNSnFL-s73ORXuKuRnjRqlZw0Q7APzGY";
 const bot = new TelegramBot(token, { polling: true });
+
+let getDeposit = 0;
+let getAmount = 0;
+let getExpenses = 0;
+let getComment = 0;
+
+let departedLocation = 0;
+let startedLocation = 0;
+let completedLocation = 0;
+
+let idMes = null;
+let idMes2 = null;
+let idMes3 = null;
+let idOrder = null;
+
+let amountClose = null;
+let expensesClose = null;
+let geoClose = null;
+let photoClose = null;
+let commentClose = null;
+
+let photoQuantity = 0;
+
 //база данных
 async function createUser(chatId) {
   try {
@@ -66,9 +89,17 @@ async function getOrderIdText(messageText) {
   // Получить значение id из результатов сопоставления
   return idMatch ? idMatch[1] : null;
 }
+async function parseNum(depositAmount) {
+  depositA = parseInt(depositAmount); // Парсим ответ пользователя в числовой формат
+  if (isNaN(depositA)) {
+    // Проверяем, является ли ответ числом
+    return false;
+  }
+  return true;
+}
 
 //Телеграм АПИ
-// Обработчик нажатия на кнопки
+// Обработчик события "Нажатие кнопок"
 bot.on("callback_query", async (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
   const messageId = callbackQuery.message.message_id;
@@ -91,47 +122,176 @@ bot.on("callback_query", async (callbackQuery) => {
   }
   // Проверяем, что нажата кнопка "Начал"
   else if (data.startsWith("star_work")) {
-    await buttonGeoStartWork(orderId, chatId, messageId, data);
+    await buttonGeoStartWork(orderId, chatId, messageId);
+  }
+  // Проверяем, что нажата кнопка "Задаток"
+  else if (data.startsWith("getDeposit")) {
+    getDeposit = 1;
+    idMes = messageId;
+    idOrder = orderId;
+    const response = await bot.sendMessage(chatId, "Введите задаток: ");
+    idMes2 = response.message_id; // Получаем идентификатор отправленного сообщения
+  }
+  // Проверяем, что нажата кнопка "Завершить"
+  else if (data.startsWith("closeOrder")) {
+    await buttonGeoCloseOrder(orderId, chatId, messageId);
+  }
+  // Проверяем, что нажата кнопка "Сумма"
+  else if (data.startsWith("getAmount")) {
+    getAmount = 1;
+    idMes = messageId;
+    idOrder = orderId;
+    const response = await bot.sendMessage(chatId, "Введите сумму: ");
+    idMes2 = response.message_id; // Получаем идентификатор отправленного сообщения
+  }
+  // Проверяем, что нажата кнопка "Закрыть"
+  else if (data.startsWith("close")) {
+    await confirmClose(orderId, chatId);
+    console.log("Функция Подвердить закрытие");
+  }
+  // Проверяем, что нажата кнопка "Подтвердить закрытие"
+  else if (data.startsWith("confirm")) {
+    bot.deleteMessage(chatId, messageId);
+    //здесь нужно выполнить запись данных в бд
+    //И вывести новое сообщение со всеми данными без кнопок
+  }
+  // Проверяем, что нажата кнопка "Назад"
+  else if (data.startsWith("back")) {
+    bot.deleteMessage(chatId, messageId);
+    buttonCloseOrder(orderId, chatId);
   }
 });
-// Обработчик события "location"
+// Обработчик события "Отправка Гео"
 bot.on("location", async (msg) => {
-  try {
-    const chatId = msg.chat.id;
-    const location = msg.location;
-    const orderId = await getOrderIdText(msg.reply_to_message.text);
-    const orderData = await getOrderDate(orderId);
+  if (departedLocation || startedLocation || completedLocation) {
+    try {
+      const chatId = msg.chat.id;
+      const location = msg.location;
+      const orderId = await getOrderIdText(msg.reply_to_message.text);
+      const orderData = await getOrderDate(orderId);
 
-    //гео выехал (до времени начала)
-    if (!orderData.orderData.started_at) {
-      await updateOrder(orderId, {
-        departed_location: location.toString(),
-      });
-      await buttonStartWork(orderId, chatId, msg.message_id);
+      //гео выехал
+      if (!orderData.orderData.departed_location) {
+        await updateOrder(orderId, {
+          departed_location: location.toString(),
+        });
+        departedLocation = 0;
+        await buttonStartWork(orderId, chatId);
+      }
+      //гео начал
+      else if (!orderData.orderData.started_location) {
+        await updateOrder(orderId, {
+          started_location: location.toString(),
+        });
+        startedLocation = 0;
+        await buttonPushDeposit(orderId, chatId);
+      }
+      //гео закончил
+      else if (!orderData.orderData.completed_location) {
+        geoClose = location.toString();
+        completedLocation = 0;
+        await inputVal(orderId, chatId);
+      }
+      bot.deleteMessage(chatId, msg.message_id);
+      bot.deleteMessage(chatId, idMes);
+    } catch (error) {
+      console.error("Ошибка при обработке местоположения:", error);
     }
-    //гео начал (до получ задатка)
-    else if (!orderData.orderData.deposit_amount) {
-      await updateOrder(orderId, {
-        started_location: location.toString(),
-      });
-      await buttonPushDeposit(orderId, chatId, msg.message_id);
-    }
-    //гео закончил (до до суммы  закрытия)
-    else if (!orderData.orderData.deposit_amount) {
-      await updateOrder(orderId, {
-        started_location: location.toString(),
-      });
-      // await buttonStartWork(orderId, chatId, msg.message_id);
-    }
-  } catch (error) {
-    console.error("Ошибка при обработке местоположения:", error);
   }
 });
+// Обработчик события "Отправка Текса"
+bot.on("message", async (msg) => {
+  if (getDeposit || getAmount || getExpenses || getComment) {
+    try {
+      const chatId = msg.chat.id;
+      const orderData = await getOrderDate(idOrder);
+      //Если нет задатка
+      if (
+        getDeposit &&
+        !orderData.orderData.deposit_amount &&
+        (await parseNum(msg.text))
+      ) {
+        await updateOrder(idOrder, {
+          deposit_amount: msg.text,
+          deposit_received_at: new Date(),
+        });
+        getDeposit = 0;
+        bot.deleteMessage(chatId, idMes);
+        bot.deleteMessage(chatId, idMes2);
+        bot.deleteMessage(chatId, msg.message_id);
+        await buttonCloseOrder(idOrder, chatId);
+      }
+      //Если нет суммы
+      else if (
+        getAmount &&
+        !orderData.orderData.amount &&
+        (await parseNum(msg.text))
+      ) {
+        amountClose = msg.text;
+        getAmount = 0;
+        bot.deleteMessage(chatId, idMes2);
+        bot.deleteMessage(chatId, msg.message_id);
 
+        getExpenses = 1;
+        const response = await bot.sendMessage(chatId, "Введите расход: ");
+        idMes2 = response.message_id; // Получаем идентификатор отправленного сообщения
+      }
+      //Если нет расхода
+      else if (
+        getExpenses &&
+        !orderData.orderData.expenses &&
+        (await parseNum(msg.text))
+      ) {
+        expensesClose = msg.text;
+        getExpenses = 0;
+        bot.deleteMessage(chatId, idMes2);
+        bot.deleteMessage(chatId, msg.message_id);
+
+        getComment = 1;
+        const response = await bot.sendMessage(chatId, "Введите комментарий: ");
+        idMes2 = response.message_id; // Получаем идентификатор отправленного сообщения
+      }
+      //Если нет коммента
+      else if (getComment && !orderData.orderData.comment) {
+        commentClose = msg.text;
+        getComment = 0;
+        bot.deleteMessage(chatId, idMes3);
+        bot.deleteMessage(chatId, idMes2);
+        bot.deleteMessage(chatId, msg.message_id);
+        photoQuantity = 4;
+        await confirmClose(idOrder, chatId);
+      }
+    } catch (error) {
+      console.error("Ошибка при обработке сообщения:", error);
+    }
+  }
+});
+// Обработчик события "Отправка Фото"
+bot.on("photo", async (msg) => {
+  console.log("bot.on photo");
+  if (photoQuantity) {
+    try {
+      const chatId = msg.chat.id;
+      const photo = msg.photo; // Получаем массив фотографий
+      console.log("photo ", photo);
+      const fileId = photo[photo.length - 1].file_id; // Берем ID последней (самой большой) фотографии из массива
+      const orderData = await getOrderDate(idOrder);
+
+      //Если лимит фото исчерпан то перейти к функции Подвердить закрытие
+      photoQuantity = photoQuantity - 1;
+      if (!photoQuantity) {
+        await confirmClose(idOrder, chatId);
+      }
+    } catch (error) {
+      console.error("Ошибка при обработке сообщения:", error);
+    }
+  }
+});
+// Обработчик нажатия на кнопку "Принять"
 async function sendOrderToMaster(chatId, name, surname, orderData) {
   try {
     // Формируем текст сообщения с данными заказа
-    const message = `ID: ${orderData.id}\nАдрес: ${orderData.address}\nТелефон клиента: ${orderData.client_phone}\nВремя встречи: ${orderData.meeting_time}\nМарка: ${orderData.brand}\nТип техники: ${orderData.product_type}\nМастер: ${surname} ${name}`;
+    const message = `ID: ${orderData.id}\nАдрес: ${orderData.address}\nТелефон клиента: ${orderData.client_phone}\nВремя встречи: ${orderData.meeting_time}\nМарка: ${orderData.brand}\nПричина обращения: ${orderData.breakage_type}\nТип техники: ${orderData.product_type}\nМастер: ${surname} ${name}`;
     // Создаем кнопку "Принять"
     const acceptButton = {
       text: "Принять",
@@ -157,6 +317,7 @@ async function buttonDeparted(orderId, chatId, messageId) {
       confirmed_at: new Date(),
     });
     const data = await getOrderDate(orderId);
+
     // Удаляем инлайн-клавиатуру после нажатия на кнопку
     bot.deleteMessage(chatId, messageId);
 
@@ -165,7 +326,9 @@ async function buttonDeparted(orderId, chatId, messageId) {
       data.orderData.address
     }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
       data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
+      data.orderData.breakage_type
+    }\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
@@ -204,7 +367,9 @@ async function buttonGeoDeparted(orderId, chatId, messageId) {
       data.orderData.address
     }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
       data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
+      data.orderData.breakage_type
+    }\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
@@ -221,26 +386,29 @@ async function buttonGeoDeparted(orderId, chatId, messageId) {
       one_time_keyboard: true,
       keyboard: [[requestLocationButton]],
     };
-
+    departedLocation = 1;
     // Отправляем сообщение мастеру с клавиатурой
-    await bot.sendMessage(chatId, message, { reply_markup: keyboard });
+    const response = await bot.sendMessage(chatId, message, {
+      reply_markup: keyboard,
+    });
+    // Сохраняем идентификатор отправленного сообщения
+    idMes = response.message_id;
   } catch (error) {
     console.error("Ошибка при отправке сообщения мастеру:", error);
   }
 }
 // Обработчик нажатия на кнопку "Начал"
-async function buttonStartWork(orderId, chatId, messageId) {
+async function buttonStartWork(orderId, chatId) {
   try {
     const data = await getOrderDate(orderId);
-    // Удаляем инлайн-клавиатуру после нажатия на кнопку
-    bot.deleteMessage(chatId, messageId);
-
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
     const message = `ID: ${data.orderData.id}\nАдрес: ${
       data.orderData.address
     }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
       data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
+      data.orderData.breakage_type
+    }\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
@@ -263,7 +431,7 @@ async function buttonStartWork(orderId, chatId, messageId) {
     console.error("Ошибка при отправке сообщения мастеру:", error);
   }
 }
-// Обработчик нажатия на кнопку "отправить геопозицию начал"
+// Обработчик нажатия на кнопку "Гео начал"
 async function buttonGeoStartWork(orderId, chatId, messageId) {
   try {
     // Вызываем функцию обновления заказа
@@ -280,7 +448,9 @@ async function buttonGeoStartWork(orderId, chatId, messageId) {
       data.orderData.address
     }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
       data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
+      data.orderData.breakage_type
+    }\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
@@ -297,20 +467,21 @@ async function buttonGeoStartWork(orderId, chatId, messageId) {
       one_time_keyboard: true,
       keyboard: [[requestLocationButton]],
     };
-
+    startedLocation = 1;
     // Отправляем сообщение мастеру с клавиатурой
-    await bot.sendMessage(chatId, message, { reply_markup: keyboard });
+    const response = await bot.sendMessage(chatId, message, {
+      reply_markup: keyboard,
+    });
+    // Сохраняем идентификатор отправленного сообщения
+    idMes = response.message_id;
   } catch (error) {
     console.error("Ошибка при отправке сообщения мастеру:", error);
   }
 }
 // Обработчик нажатия на кнопку "Задаток"
-async function buttonPushDeposit(orderId, chatId, messageId) {
+async function buttonPushDeposit(orderId, chatId) {
   try {
     const data = await getOrderDate(orderId);
-    // Удаляем инлайн-клавиатуру после нажатия на кнопку
-    bot.deleteMessage(chatId, messageId);
-
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
     const message = `ID: ${data.orderData.id}\nАдрес: ${
       data.orderData.address
@@ -325,7 +496,7 @@ async function buttonPushDeposit(orderId, chatId, messageId) {
     // Создаем кнопку "Задаток"
     const acceptButton = {
       text: "Задаток",
-      callback_data: `star_work`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
+      callback_data: `getDeposit`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
     };
 
     // Формируем клавиатуру с кнопкой
@@ -339,7 +510,146 @@ async function buttonPushDeposit(orderId, chatId, messageId) {
     console.error("Ошибка при отправке сообщения мастеру:", error);
   }
 }
+// Обработчик нажатия на кнопку "Завершить"
+async function buttonCloseOrder(orderId, chatId) {
+  try {
+    const data = await getOrderDate(orderId);
+    // Отправляем сообщение мастеру о начале заказа с данными из заказа
+    const message = `ID: ${data.orderData.id}\nАдрес: ${
+      data.orderData.address
+    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
+      data.orderData.meeting_time
+    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+      data.orderData.product_type
+    }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
+      data.orderData.deposit_amount
+    }\nМастер: ${data.masterData.surname} ${data.masterData.name}`;
 
+    // Создаем кнопку "Завершить"
+    const acceptButton = {
+      text: "Завершить",
+      callback_data: `closeOrder`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
+    };
+
+    // Формируем клавиатуру с кнопкой
+    const keyboard = {
+      inline_keyboard: [[acceptButton]],
+    };
+
+    // Отправляем сообщение мастеру с клавиатурой
+    await bot.sendMessage(chatId, message, { reply_markup: keyboard });
+  } catch (error) {
+    console.error("Ошибка при отправке сообщения мастеру:", error);
+  }
+}
+// Обработчик нажатия на кнопку "Гео Закрыть"
+async function buttonGeoCloseOrder(orderId, chatId, messageId) {
+  try {
+    const data = await getOrderDate(orderId);
+    // Удаляем инлайн-клавиатуру после нажатия на кнопку
+    bot.deleteMessage(chatId, messageId);
+
+    const message = `ID: ${data.orderData.id}\nАдрес: ${
+      data.orderData.address
+    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
+      data.orderData.meeting_time
+    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+      data.orderData.product_type
+    }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
+      data.orderData.deposit_amount
+    }\nМастер: ${data.masterData.surname} ${data.masterData.name}`;
+
+    const requestLocationButton = {
+      text: "Отправить геопозицию",
+      request_location: true, // Это свойство запрашивает у пользователя его текущую геопозицию
+    };
+
+    // Формируем клавиатуру с кнопкой для запроса геопозиции
+    const keyboard = {
+      resize_keyboard: true,
+      one_time_keyboard: true,
+      keyboard: [[requestLocationButton]],
+    };
+    startedLocation = 1;
+    // Отправляем сообщение мастеру с клавиатурой
+    const response = await bot.sendMessage(chatId, message, {
+      reply_markup: keyboard,
+    });
+    // Сохраняем идентификатор отправленного сообщения
+    idMes = response.message_id;
+  } catch (error) {
+    console.error("Ошибка при отправке сообщения мастеру:", error);
+  }
+}
+// Обработчик нажатия на кнопку "Закрыть"
+async function inputVal(orderId, chatId) {
+  try {
+    const data = await getOrderDate(orderId, chatId);
+    // bot.deleteMessage(chatId, idMes);
+    const message = `ID: ${data.orderData.id}\nАдрес: ${
+      data.orderData.address
+    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
+      data.orderData.meeting_time
+    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+      data.orderData.product_type
+    }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
+      data.orderData.deposit_amount
+    }\nМастер2: ${data.masterData.surname} ${data.masterData.name}`;
+    // Отправляем сообщение мастеру с клавиатурой
+    const response = await bot.sendMessage(chatId, message);
+    // Сохраняем идентификатор отправленного сообщения
+    idMes3 = response.message_id;
+
+    // Отправляем сообщение мастеру с клавиатурой
+    const response2 = await bot.sendMessage(chatId, "Введите сумму: ");
+    // Сохраняем идентификатор отправленного сообщения
+    idMes2 = response2.message_id;
+    getAmount = 1;
+  } catch (error) {
+    console.error("Ошибка при отправке сообщения мастеру:", error);
+  }
+}
+// Обработчик нажатия на кнопку "подтвердить закрытие"
+async function confirmClose(orderId, chatId) {
+  try {
+    const data = await getOrderDate(orderId, chatId);
+
+    const message = `ID: ${data.orderData.id}\nАдрес: ${
+      data.orderData.address
+    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
+      data.orderData.meeting_time
+    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+      data.orderData.product_type
+    }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
+      data.orderData.deposit_amount
+    }\nМастер: ${data.masterData.surname} ${
+      data.masterData.name
+    }\n\nСумма: ${amountClose}\nРасход: ${expensesClose}\nКомментарий: ${commentClose}\n\nВы можете добавить до 4 фото:`;
+
+    photoQuantity = 0;
+
+    // Создаем кнопку "Подтвердить"
+    const confirmButton = {
+      text: "Подтвердить",
+      callback_data: `confirm`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
+    };
+    // Создаем кнопку "Назад"
+    const backButton = {
+      text: "Назад",
+      callback_data: `back`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
+    };
+
+    // Формируем клавиатуру с кнопкой
+    const keyboard = {
+      inline_keyboard: [[confirmButton], [backButton]],
+    };
+
+    // Отправляем сообщение мастеру с клавиатурой
+    await bot.sendMessage(chatId, message, { reply_markup: keyboard });
+  } catch (error) {
+    console.error("Ошибка при отправке сообщения мастеру:", error);
+  }
+}
 // Обработчик команды /start - регистрация нового мастера
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;

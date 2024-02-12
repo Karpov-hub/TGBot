@@ -51,9 +51,6 @@ module.exports = {
         type: Sequelize.STRING, // Геопозиция места завершения заказа
         defaultValue: null,
       },
-      request_date: {
-        type: Sequelize.DATE, // Дата обращения клиента
-      },
       address: {
         type: Sequelize.STRING, // Адрес выполнения работы
       },
@@ -87,6 +84,13 @@ module.exports = {
       expenses: {
         type: Sequelize.FLOAT, // Расходы
         defaultValue: null,
+      },
+      photo_urls: {
+        type: Sequelize.ARRAY(Sequelize.STRING), // фото
+        defaultValue: null,
+      },
+      breakage_type: {
+        type: Sequelize.STRING, // Тип поломки
       },
     });
   },
