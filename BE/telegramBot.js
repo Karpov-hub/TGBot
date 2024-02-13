@@ -21,7 +21,7 @@ let idOrder = null;
 let amountClose = null;
 let expensesClose = null;
 let geoClose = null;
-let photoClose = null;
+let photoClose = [];
 let commentClose = null;
 
 let photoQuantity = 0;
@@ -136,27 +136,20 @@ bot.on("callback_query", async (callbackQuery) => {
   else if (data.startsWith("closeOrder")) {
     await buttonGeoCloseOrder(orderId, chatId, messageId);
   }
-  // Проверяем, что нажата кнопка "Сумма"
-  else if (data.startsWith("getAmount")) {
-    getAmount = 1;
-    idMes = messageId;
-    idOrder = orderId;
-    const response = await bot.sendMessage(chatId, "Введите сумму: ");
-    idMes2 = response.message_id; // Получаем идентификатор отправленного сообщения
-  }
-  // Проверяем, что нажата кнопка "Закрыть"
-  else if (data.startsWith("close")) {
-    await confirmClose(orderId, chatId);
-    console.log("Функция Подвердить закрытие");
-  }
   // Проверяем, что нажата кнопка "Подтвердить закрытие"
   else if (data.startsWith("confirm")) {
     bot.deleteMessage(chatId, messageId);
+    await report(orderId, chatId);
     //здесь нужно выполнить запись данных в бд
     //И вывести новое сообщение со всеми данными без кнопок
   }
   // Проверяем, что нажата кнопка "Назад"
   else if (data.startsWith("back")) {
+    amountClose = null;
+    expensesClose = null;
+    geoClose = null;
+    photoClose = [];
+    commentClose = null;
     bot.deleteMessage(chatId, messageId);
     buttonCloseOrder(orderId, chatId);
   }
@@ -167,30 +160,30 @@ bot.on("location", async (msg) => {
     try {
       const chatId = msg.chat.id;
       const location = msg.location;
-      const orderId = await getOrderIdText(msg.reply_to_message.text);
-      const orderData = await getOrderDate(orderId);
+      // const orderId = await getOrderIdText(msg.reply_to_message.text);
+      const orderData = await getOrderDate(idOrder);
 
       //гео выехал
       if (!orderData.orderData.departed_location) {
-        await updateOrder(orderId, {
+        await updateOrder(idOrder, {
           departed_location: location.toString(),
         });
         departedLocation = 0;
-        await buttonStartWork(orderId, chatId);
+        await buttonStartWork(idOrder, chatId);
       }
       //гео начал
       else if (!orderData.orderData.started_location) {
-        await updateOrder(orderId, {
+        await updateOrder(idOrder, {
           started_location: location.toString(),
         });
         startedLocation = 0;
-        await buttonPushDeposit(orderId, chatId);
+        await buttonPushDeposit(idOrder, chatId);
       }
       //гео закончил
       else if (!orderData.orderData.completed_location) {
-        geoClose = location.toString();
+        geoClose = location;
         completedLocation = 0;
-        await inputVal(orderId, chatId);
+        await inputVal(idOrder, chatId);
       }
       bot.deleteMessage(chatId, msg.message_id);
       bot.deleteMessage(chatId, idMes);
@@ -268,25 +261,26 @@ bot.on("message", async (msg) => {
 });
 // Обработчик события "Отправка Фото"
 bot.on("photo", async (msg) => {
-  console.log("bot.on photo");
-  if (photoQuantity) {
-    try {
-      const chatId = msg.chat.id;
-      const photo = msg.photo; // Получаем массив фотографий
-      console.log("photo ", photo);
-      const fileId = photo[photo.length - 1].file_id; // Берем ID последней (самой большой) фотографии из массива
-      const orderData = await getOrderDate(idOrder);
-
-      //Если лимит фото исчерпан то перейти к функции Подвердить закрытие
-      photoQuantity = photoQuantity - 1;
+  try {
+    const chatId = msg.chat.id;
+    const messageId = msg.message_id;
+    const photo = msg.photo[0].file_id; // Получаем массив фотографий
+    await bot.deleteMessage(chatId, messageId);
+    if (photoQuantity) {
+      photoClose.push(photo);
+      photoQuantity--;
       if (!photoQuantity) {
-        await confirmClose(idOrder, chatId);
+        console.log("photoQuantity");
+
+        confirmClose(orderId, chatId);
       }
-    } catch (error) {
-      console.error("Ошибка при обработке сообщения:", error);
     }
+    // await bot.sendPhoto(chatId, photo);
+  } catch (error) {
+    console.error("Ошибка при обработке сообщения:", error);
   }
 });
+
 // Обработчик нажатия на кнопку "Принять"
 async function sendOrderToMaster(chatId, name, surname, orderData) {
   try {
@@ -362,6 +356,7 @@ async function buttonGeoDeparted(orderId, chatId, messageId) {
     const data = await getOrderDate(orderId);
     // Удаляем инлайн-клавиатуру после нажатия на кнопку
     bot.deleteMessage(chatId, messageId);
+    idOrder = data.orderData.id;
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
     const message = `ID: ${data.orderData.id}\nАдрес: ${
       data.orderData.address
@@ -442,7 +437,7 @@ async function buttonGeoStartWork(orderId, chatId, messageId) {
     const data = await getOrderDate(orderId);
     // Удаляем инлайн-клавиатуру после нажатия на кнопку
     bot.deleteMessage(chatId, messageId);
-
+    idOrder = data.orderData.id;
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
     const message = `ID: ${data.orderData.id}\nАдрес: ${
       data.orderData.address
@@ -487,7 +482,9 @@ async function buttonPushDeposit(orderId, chatId) {
       data.orderData.address
     }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
       data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
+      data.orderData.breakage_type
+    }\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
@@ -519,7 +516,9 @@ async function buttonCloseOrder(orderId, chatId) {
       data.orderData.address
     }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
       data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
+      data.orderData.breakage_type
+    }\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
       data.orderData.deposit_amount
@@ -546,6 +545,7 @@ async function buttonCloseOrder(orderId, chatId) {
 async function buttonGeoCloseOrder(orderId, chatId, messageId) {
   try {
     const data = await getOrderDate(orderId);
+    idOrder = data.orderData.id;
     // Удаляем инлайн-клавиатуру после нажатия на кнопку
     bot.deleteMessage(chatId, messageId);
 
@@ -553,12 +553,14 @@ async function buttonGeoCloseOrder(orderId, chatId, messageId) {
       data.orderData.address
     }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
       data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
+      data.orderData.breakage_type
+    }\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
       data.orderData.deposit_amount
     }\nМастер: ${data.masterData.surname} ${data.masterData.name}`;
-
+    completedLocation = 1;
     const requestLocationButton = {
       text: "Отправить геопозицию",
       request_location: true, // Это свойство запрашивает у пользователя его текущую геопозицию
@@ -590,7 +592,9 @@ async function inputVal(orderId, chatId) {
       data.orderData.address
     }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
       data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
+      data.orderData.breakage_type
+    }\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
       data.orderData.deposit_amount
@@ -618,15 +622,15 @@ async function confirmClose(orderId, chatId) {
       data.orderData.address
     }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
       data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nТип техники: ${
+    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
+      data.orderData.breakage_type
+    }\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
       data.orderData.deposit_amount
     }\nМастер: ${data.masterData.surname} ${
       data.masterData.name
     }\n\nСумма: ${amountClose}\nРасход: ${expensesClose}\nКомментарий: ${commentClose}\n\nВы можете добавить до 4 фото:`;
-
-    photoQuantity = 0;
 
     // Создаем кнопку "Подтвердить"
     const confirmButton = {
@@ -638,14 +642,61 @@ async function confirmClose(orderId, chatId) {
       text: "Назад",
       callback_data: `back`, // Данные, которые будут отправлены обратно боту при нажатии на кнопку
     };
-
     // Формируем клавиатуру с кнопкой
     const keyboard = {
       inline_keyboard: [[confirmButton], [backButton]],
     };
-
     // Отправляем сообщение мастеру с клавиатурой
     await bot.sendMessage(chatId, message, { reply_markup: keyboard });
+  } catch (error) {
+    console.error("Ошибка при отправке сообщения мастеру:", error);
+  }
+}
+// Обработчик нажатия на кнопку "подтвердить закрытие"
+async function report(orderId, chatId) {
+  try {
+    // Вызываем функцию обновления заказа
+    let orderData = {
+      completed_at: new Date(),
+      amount: amountClose,
+      expenses: expensesClose,
+      comment: commentClose,
+      completed_location: geoClose.toString(),
+    };
+    if (photoClose.length > 0) {
+      orderData.photo_urls = photoClose;
+    }
+    await updateOrder(orderId, orderData);
+
+    const data = await getOrderDate(orderId, chatId);
+    const message = `ID: ${data.orderData.id}\nАдрес: ${
+      data.orderData.address
+    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
+      data.orderData.meeting_time
+    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
+      data.orderData.breakage_type
+    }\nТип техники: ${
+      data.orderData.product_type
+    }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
+      data.orderData.deposit_amount
+    }\nМастер: ${data.masterData.surname} ${data.masterData.name}\n\nСумма: ${
+      data.orderData.amount
+    }\nРасход: ${data.orderData.expenses}\nКомментарий: ${
+      data.orderData.comment
+    }\nЗакрыл: ${data.orderData.completed_at.toLocaleString()}`;
+    bot.sendMessage(chatId, message);
+
+    if (photoClose.length > 0) {
+      let media = [];
+      photoClose.forEach((element) => {
+        media.push({ type: "photo", media: element });
+      });
+
+      bot.sendMediaGroup(chatId, media);
+      photoClose = [];
+    }
+
+    // Отправляем сообщение мастеру с клавиатурой
   } catch (error) {
     console.error("Ошибка при отправке сообщения мастеру:", error);
   }

@@ -27,6 +27,7 @@ async function createOrder(req, res) {
       brand: req.body.brand,
       product_type: req.body.product_type,
       assigned_master: null,
+      breakage_type: req.body.breakage_type,
     });
     return res.send({ success: true });
   } catch (err) {
