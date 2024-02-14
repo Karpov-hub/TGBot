@@ -26,6 +26,8 @@ let commentClose = null;
 
 let photoQuantity = 0;
 
+let adminChatId = "5739980625";
+
 //база данных
 async function createUser(chatId) {
   try {
@@ -270,9 +272,7 @@ bot.on("photo", async (msg) => {
       photoClose.push(photo);
       photoQuantity--;
       if (!photoQuantity) {
-        console.log("photoQuantity");
-
-        confirmClose(orderId, chatId);
+        report(idOrder, chatId);
       }
     }
     // await bot.sendPhoto(chatId, photo);
@@ -285,7 +285,7 @@ bot.on("photo", async (msg) => {
 async function sendOrderToMaster(chatId, name, surname, orderData) {
   try {
     // Формируем текст сообщения с данными заказа
-    const message = `ID: ${orderData.id}\nАдрес: ${orderData.address}\nТелефон клиента: ${orderData.client_phone}\nВремя встречи: ${orderData.meeting_time}\nМарка: ${orderData.brand}\nПричина обращения: ${orderData.breakage_type}\nТип техники: ${orderData.product_type}\nМастер: ${surname} ${name}`;
+    const message = `ID: ${orderData.id}\n\n№: ${orderData.num_order}\nАдрес: ${orderData.address}\nТелефон клиента: ${orderData.client_phone}\nВремя встречи: ${orderData.meeting_time}\nМарка: ${orderData.brand}\nПричина обращения: ${orderData.breakage_type}\nТип техники: ${orderData.product_type}\nМастер: ${surname} ${name}`;
     // Создаем кнопку "Принять"
     const acceptButton = {
       text: "Принять",
@@ -316,13 +316,13 @@ async function buttonDeparted(orderId, chatId, messageId) {
     bot.deleteMessage(chatId, messageId);
 
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
-    const message = `ID: ${data.orderData.id}\nАдрес: ${
-      data.orderData.address
-    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
-      data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
-      data.orderData.breakage_type
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\n\n№: ${
+      data.orderData.num_order
+    }\nАдрес: ${data.orderData.address}\nТелефон клиента: ${
+      data.orderData.client_phone
+    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
+      data.orderData.brand
+    }\nПричина обращения: ${data.orderData.breakage_type}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
@@ -358,13 +358,13 @@ async function buttonGeoDeparted(orderId, chatId, messageId) {
     bot.deleteMessage(chatId, messageId);
     idOrder = data.orderData.id;
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
-    const message = `ID: ${data.orderData.id}\nАдрес: ${
-      data.orderData.address
-    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
-      data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
-      data.orderData.breakage_type
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\n\n№: ${
+      data.orderData.num_order
+    }\nАдрес: ${data.orderData.address}\nТелефон клиента: ${
+      data.orderData.client_phone
+    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
+      data.orderData.brand
+    }\nПричина обращения: ${data.orderData.breakage_type}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
@@ -397,13 +397,13 @@ async function buttonStartWork(orderId, chatId) {
   try {
     const data = await getOrderDate(orderId);
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
-    const message = `ID: ${data.orderData.id}\nАдрес: ${
-      data.orderData.address
-    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
-      data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
-      data.orderData.breakage_type
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\n\n№: ${
+      data.orderData.num_order
+    }\nАдрес: ${data.orderData.address}\nТелефон клиента: ${
+      data.orderData.client_phone
+    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
+      data.orderData.brand
+    }\nПричина обращения: ${data.orderData.breakage_type}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
@@ -439,13 +439,13 @@ async function buttonGeoStartWork(orderId, chatId, messageId) {
     bot.deleteMessage(chatId, messageId);
     idOrder = data.orderData.id;
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
-    const message = `ID: ${data.orderData.id}\nАдрес: ${
-      data.orderData.address
-    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
-      data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
-      data.orderData.breakage_type
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\n\n№: ${
+      data.orderData.num_order
+    }\nАдрес: ${data.orderData.address}\nТелефон клиента: ${
+      data.orderData.client_phone
+    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
+      data.orderData.brand
+    }\nПричина обращения: ${data.orderData.breakage_type}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
@@ -478,13 +478,13 @@ async function buttonPushDeposit(orderId, chatId) {
   try {
     const data = await getOrderDate(orderId);
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
-    const message = `ID: ${data.orderData.id}\nАдрес: ${
-      data.orderData.address
-    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
-      data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
-      data.orderData.breakage_type
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\n\n№: ${
+      data.orderData.num_order
+    }\nАдрес: ${data.orderData.address}\nТелефон клиента: ${
+      data.orderData.client_phone
+    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
+      data.orderData.brand
+    }\nПричина обращения: ${data.orderData.breakage_type}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nМастер: ${
       data.masterData.surname
@@ -512,13 +512,13 @@ async function buttonCloseOrder(orderId, chatId) {
   try {
     const data = await getOrderDate(orderId);
     // Отправляем сообщение мастеру о начале заказа с данными из заказа
-    const message = `ID: ${data.orderData.id}\nАдрес: ${
-      data.orderData.address
-    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
-      data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
-      data.orderData.breakage_type
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\n\n№: ${
+      data.orderData.num_order
+    }\nАдрес: ${data.orderData.address}\nТелефон клиента: ${
+      data.orderData.client_phone
+    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
+      data.orderData.brand
+    }\nПричина обращения: ${data.orderData.breakage_type}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
       data.orderData.deposit_amount
@@ -549,13 +549,13 @@ async function buttonGeoCloseOrder(orderId, chatId, messageId) {
     // Удаляем инлайн-клавиатуру после нажатия на кнопку
     bot.deleteMessage(chatId, messageId);
 
-    const message = `ID: ${data.orderData.id}\nАдрес: ${
-      data.orderData.address
-    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
-      data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
-      data.orderData.breakage_type
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\n\n№: ${
+      data.orderData.num_order
+    }\nАдрес: ${data.orderData.address}\nТелефон клиента: ${
+      data.orderData.client_phone
+    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
+      data.orderData.brand
+    }\nПричина обращения: ${data.orderData.breakage_type}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
       data.orderData.deposit_amount
@@ -588,17 +588,17 @@ async function inputVal(orderId, chatId) {
   try {
     const data = await getOrderDate(orderId, chatId);
     // bot.deleteMessage(chatId, idMes);
-    const message = `ID: ${data.orderData.id}\nАдрес: ${
-      data.orderData.address
-    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
-      data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
-      data.orderData.breakage_type
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\n\n№: ${
+      data.orderData.num_order
+    }\nАдрес: ${data.orderData.address}\nТелефон клиента: ${
+      data.orderData.client_phone
+    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
+      data.orderData.brand
+    }\nПричина обращения: ${data.orderData.breakage_type}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
       data.orderData.deposit_amount
-    }\nМастер2: ${data.masterData.surname} ${data.masterData.name}`;
+    }\nМастер: ${data.masterData.surname} ${data.masterData.name}`;
     // Отправляем сообщение мастеру с клавиатурой
     const response = await bot.sendMessage(chatId, message);
     // Сохраняем идентификатор отправленного сообщения
@@ -618,13 +618,13 @@ async function confirmClose(orderId, chatId) {
   try {
     const data = await getOrderDate(orderId, chatId);
 
-    const message = `ID: ${data.orderData.id}\nАдрес: ${
-      data.orderData.address
-    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
-      data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
-      data.orderData.breakage_type
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\n\n№: ${
+      data.orderData.num_order
+    }\nАдрес: ${data.orderData.address}\nТелефон клиента: ${
+      data.orderData.client_phone
+    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
+      data.orderData.brand
+    }\nПричина обращения: ${data.orderData.breakage_type}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
       data.orderData.deposit_amount
@@ -669,13 +669,13 @@ async function report(orderId, chatId) {
     await updateOrder(orderId, orderData);
 
     const data = await getOrderDate(orderId, chatId);
-    const message = `ID: ${data.orderData.id}\nАдрес: ${
-      data.orderData.address
-    }\nТелефон клиента: ${data.orderData.client_phone}\nВремя встречи: ${
-      data.orderData.meeting_time
-    }\nМарка: ${data.orderData.brand}\nПричина обращения: ${
-      data.orderData.breakage_type
-    }\nТип техники: ${
+    const message = `ID: ${data.orderData.id}\n\n№: ${
+      data.orderData.num_order
+    }\nАдрес: ${data.orderData.address}\nТелефон клиента: ${
+      data.orderData.client_phone
+    }\nВремя встречи: ${data.orderData.meeting_time}\nМарка: ${
+      data.orderData.brand
+    }\nПричина обращения: ${data.orderData.breakage_type}\nТип техники: ${
       data.orderData.product_type
     }\nПринял: ${data.orderData.confirmed_at.toLocaleString()}\nВыехал: ${data.orderData.departed_at.toLocaleString()}\nНачал: ${data.orderData.started_at.toLocaleString()}\nЗадаток: ${
       data.orderData.deposit_amount
@@ -685,6 +685,7 @@ async function report(orderId, chatId) {
       data.orderData.comment
     }\nЗакрыл: ${data.orderData.completed_at.toLocaleString()}`;
     bot.sendMessage(chatId, message);
+    bot.sendMessage(adminChatId, message);
 
     if (photoClose.length > 0) {
       let media = [];
@@ -693,6 +694,7 @@ async function report(orderId, chatId) {
       });
 
       bot.sendMediaGroup(chatId, media);
+      bot.sendMediaGroup(adminChatId, media);
       photoClose = [];
     }
 

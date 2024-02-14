@@ -2,25 +2,10 @@ const db = require("../db/models/index");
 const { Op, where } = require("sequelize");
 const { sendOrderToMaster } = require("../telegramBot");
 
-// async function createOrder(req, res) {
-//   try {
-//     await db.order.create({
-//       address: req.body.address,
-//       client_phone: req.body.client_phone,
-//       meeting_time: req.body.meeting_time,
-//       brand: req.body.brand,
-//       product_type: req.body.product_type,
-//       assigned_master: req.body.assigned_master,
-//     });
-//     return res.send({ success: true });
-//   } catch (err) {
-//     return res.send({ success: false, err });
-//   }
-// }
-
 async function createOrder(req, res) {
   try {
     await db.order.create({
+      num_order: Math.floor(Date.now() / 1000),
       address: req.body.address,
       client_phone: req.body.client_phone,
       meeting_time: req.body.meeting_time,
@@ -73,6 +58,8 @@ async function placeOrder(req, res) {
         "client_phone",
         "meeting_time",
         "brand",
+        "num_order",
+        "breakage_type",
         "product_type",
       ],
     });

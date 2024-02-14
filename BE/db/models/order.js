@@ -33,6 +33,7 @@ module.exports = (sequelize, DataTypes) => {
       expenses: DataTypes.FLOAT, // Расходы
       photo_urls: DataTypes.ARRAY(DataTypes.STRING), // фото
       breakage_type: DataTypes.STRING, // Тип поломки
+      num_order: DataTypes.FLOAT, // Тип поломки
     },
     {
       sequelize,
