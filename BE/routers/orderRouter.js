@@ -1,4 +1,4 @@
-const express = require("express");
+const router = require("./main.router");
 const {
   createOrder,
   readOrders,
@@ -7,7 +7,6 @@ const {
   placeOrder,
   readUnassignedOrders,
 } = require("../controllers/orderController");
-const router = express.Router();
 
 router.post("/create-order", createOrder);
 router.post("/read-orders", readOrders);

@@ -1,4 +1,4 @@
-const express = require("express");
+const router = require("./main.router");
 const {
   // createUser,
   readUsers,
@@ -7,7 +7,6 @@ const {
   regUser,
   // deleteUser,
 } = require("../controllers/userController");
-const router = express.Router();
 
 // router.post("/create-user", createUser);
 router.post("/read-users", readUsers);
