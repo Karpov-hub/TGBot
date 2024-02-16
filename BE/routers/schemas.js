@@ -79,18 +79,18 @@ module.exports = {
         "order_id",
       ],
     },
-    "read-nassigned-orders": {
+    "read-nassigned-order": {
       type: "object",
       properties: {
         // session_token: { type: "string" },
         start: { type: "integer" },
         limit: { type: "integer" },
       },
-      required: [
-        // "session_token",
-        "start",
-        "limit",
-      ],
+      // required: [
+      //   "session_token",
+      //   "start",
+      //   "limit",
+      // ],
     },
   },
   admin: {
@@ -104,6 +104,42 @@ module.exports = {
       required: ["session_token"],
     },
     "update-admin": {
+      type: "object",
+      properties: {
+        session_token: { type: "string" },
+        password: { type: "string" },
+      },
+      required: ["session_token", "password"],
+    },
+  },
+  user: {
+    "read-users": {
+      type: "object",
+      properties: {
+        // session_token: { type: "string" },
+        start: { type: "integer" },
+        limit: { type: "integer" },
+      },
+      // required: ["session_token"],
+    },
+    "read-new-user": {
+      type: "object",
+      properties: {
+        // session_token: { type: "string" },
+        start: { type: "integer" },
+        limit: { type: "integer" },
+      },
+      // required: ["session_token"],
+    },
+    "update-user": {
+      type: "object",
+      properties: {
+        session_token: { type: "string" },
+        password: { type: "string" },
+      },
+      required: ["session_token", "password"],
+    },
+    "reg-user": {
       type: "object",
       properties: {
         session_token: { type: "string" },

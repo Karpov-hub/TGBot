@@ -14,8 +14,7 @@ module.exports = {
         {
           id: "fa8d5f5b-81fd-49a6-9c18-8f6cc6d839b5",
           login: "Karpov",
-          password:
-            "dccdacc87520c09e583c4138aa9301c90f430bf36b479f573d73e6404bae7cdd", //hse
+          password: "3M2syHUgwJ5YPEE4qpMByQ9DC/NrR59XPXPmQEuufN0=", //hse
           status: 0,
         },
       ]);

@@ -1,11 +1,14 @@
 const db = require("../db/models/index");
 const crypto = require("crypto");
-const redis = require("..node_modules/redis");
+const redis = require("./redis");
+const config = require("./config");
+
 async function signin(req, res) {
   let admin = await db.admin.findOne({
     where: { login: req.body.login },
     attributes: ["id", "login", "password"],
   });
+
   if (!admin) return res.send({ code: "AUTHENTICATIONFAILED" });
   if (
     crypto.createHash("sha256").update(req.body.password).digest("base64") ==

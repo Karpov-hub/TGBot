@@ -1,5 +1,5 @@
 const redis = require("redis");
-const config = require("@app/config");
+const config = require("../config");
 const client = config.redis
   ? redis.createClient(config.redis)
   : redis.createClient();
@@ -54,5 +54,5 @@ module.exports = {
   set,
   del,
   keys,
-  flushAll
+  flushAll,
 };

@@ -17,6 +17,42 @@ module.exports = {
           name: "Admin",
         },
       ]);
+    let user2 = await queryInterface.rawSelect(
+      { tableName: "users" },
+      {
+        where: { id: "fd9a91e2-e138-4f42-a687-32fcc1515cf3" },
+      },
+      ["id"]
+    );
+    if (!user2)
+      await queryInterface.bulkInsert({ tableName: "users" }, [
+        {
+          id: "fd9a91e2-e138-4f42-a687-32fcc1515cf3",
+          chat_id: "6930022894",
+          name: "Данила",
+          surname: "Людвиг",
+          patronymic: "Сергеевич",
+          phone: "+7 927 793 3556",
+        },
+      ]);
+    let user3 = await queryInterface.rawSelect(
+      { tableName: "users" },
+      {
+        where: { id: "f1c4446e-c509-4be0-a57c-e11a034dbeb5" },
+      },
+      ["id"]
+    );
+    if (!user3)
+      await queryInterface.bulkInsert({ tableName: "users" }, [
+        {
+          id: "f1c4446e-c509-4be0-a57c-e11a034dbeb5",
+          chat_id: "6930022894",
+          name: "Рафит",
+          surname: "Галиакбаров",
+          // patronymic: "Сергеевич",
+          phone: "+7 996 900 6131",
+        },
+      ]);
   },
 
   down: async (queryInterface, Sequelize) => {
