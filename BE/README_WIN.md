@@ -31,7 +31,7 @@ https://redis.io/docs/getting-started/installation/install-redis-on-windows/
 
 ### Requirements
 
-- Node 22
+- Node 20
 - Postgres 11
 - Redis
 
@@ -48,7 +48,7 @@ GRANT ALL PRIVILEGES ON DATABASE "tbdb" to hse;
 ### Run migration
 
 ```
-cd packages/db
+cd /db
 npx sequelize-cli db:migrate
 npx sequelize-cli db:seed:all
 ```
