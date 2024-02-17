@@ -24,6 +24,8 @@ async function readUnassignedOrders(req, res) {
   try {
     let { count, rows } = await db.order.findAndCountAll({
       where: { assigned_master: null },
+      offset: req.body.start,
+      limit: req.body.limit,
     });
 
     return res.send({ success: true, count, rows });
@@ -85,7 +87,10 @@ async function readUnassignedOrders(req, res) {
 
 async function readOrders(req, res) {
   try {
-    let { count, rows } = await db.order.findAndCountAll();
+    let { count, rows } = await db.order.findAndCountAll({
+      offset: req.body.start,
+      limit: req.body.limit,
+    });
 
     return res.send({ success: true, count, rows });
   } catch (err) {

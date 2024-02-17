@@ -3,7 +3,10 @@ const { Op, where } = require("sequelize");
 //addAdmin readAdmin readAdmins blockAdmin
 async function readAdmins(req, res) {
   try {
-    let { count, rows } = await db.admin.findAndCountAll();
+    let { count, rows } = await db.admin.findAndCountAll({
+      offset: req.body.start,
+      limit: req.body.limit,
+    });
 
     return res.send({ success: true, count, rows });
   } catch (err) {

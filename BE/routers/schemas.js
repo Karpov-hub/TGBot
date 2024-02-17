@@ -30,6 +30,7 @@ module.exports = {
       type: "object",
       properties: {
         password: { type: "string" },
+        new_password: { type: "string" },
       },
       required: ["password"],
       headers: {

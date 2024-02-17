@@ -8,7 +8,7 @@ const {
 const { verifyToken } = require("./middleware"); // Подключаем middleware для проверки токена
 
 router.post("/signin", signin);
-router.post("/refreshToken", refreshToken);
+router.post("/refresh-token", refreshToken);
 router.post("/change-password", verifyToken, changePassword);
 router.post("/logout", verifyToken, logout);
 

@@ -30,7 +30,10 @@ const { Op, where } = require("sequelize");
 
 async function readUsers(req, res) {
   try {
-    let { count, rows } = await db.user.findAndCountAll();
+    let { count, rows } = await db.user.findAndCountAll({
+      offset: req.body.start,
+      limit: req.body.limit,
+    });
 
     return res.send({ success: true, count, rows });
   } catch (err) {
@@ -42,6 +45,8 @@ async function readNewUsers(req, res) {
   try {
     let { count, rows } = await db.user.findAndCountAll({
       where: { surname: null },
+      offset: req.body.start,
+      limit: req.body.limit,
       attributes: ["id", "chat_id", "createdAt"],
     });
 
