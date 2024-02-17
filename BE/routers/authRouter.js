@@ -5,10 +5,11 @@ const {
   changePassword,
   logout,
 } = require("../controllers/authController");
+const { verifyToken } = require("./middleware"); // Подключаем middleware для проверки токена
 
 router.post("/signin", signin);
 router.post("/refreshToken", refreshToken);
-router.post("/change-password", changePassword);
-router.post("/logout", logout);
+router.post("/change-password", verifyToken, changePassword);
+router.post("/logout", verifyToken, logout);
 
 module.exports = router;

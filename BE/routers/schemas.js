@@ -9,33 +9,42 @@ module.exports = {
       required: ["login", "password"],
     },
     refreshToken: {
-      type: "object",
-      properties: {
-        session_token: { type: "string" },
+      headers: {
+        type: "object",
+        properties: {
+          Authorization: { type: "string" },
+        },
+        required: ["session_token"],
       },
-      required: ["session_token"],
     },
     logout: {
-      type: "object",
-      properties: {
-        session_token: { type: "string" },
+      headers: {
+        type: "object",
+        properties: {
+          Authorization: { type: "string" },
+        },
+        required: ["session_token"],
       },
-      required: ["session_token"],
     },
     "change-password": {
       type: "object",
       properties: {
-        session_token: { type: "string" },
         password: { type: "string" },
       },
-      required: ["session_token", "password"],
+      required: ["password"],
+      headers: {
+        type: "object",
+        properties: {
+          Authorization: { type: "string" },
+        },
+        required: ["session_token"],
+      },
     },
   },
   order: {
     "create-order": {
       type: "object",
       properties: {
-        // session_token: { type: "string" },
         address: { type: "string", maxLength: 100 },
         client_phone: { type: "string", maxLength: 20 },
         meeting_time: { type: "string", maxLength: 5 },
@@ -44,7 +53,6 @@ module.exports = {
         breakage_type: { type: "string", maxLength: 50 },
       },
       required: [
-        // "session_token",
         "address",
         "client_phone",
         "meeting_time",
@@ -52,100 +60,135 @@ module.exports = {
         "product_type",
         "breakage_type",
       ],
+      headers: {
+        type: "object",
+        properties: {
+          Authorization: { type: "string" },
+        },
+        required: ["session_token"],
+      },
     },
     "read-orders": {
       type: "object",
       properties: {
-        // session_token: { type: "string" },
         start: { type: "integer" },
         limit: { type: "integer" },
       },
-      required: [
-        // "session_token",
-        "start",
-        "limit",
-      ],
+      required: ["start", "limit"],
+      headers: {
+        type: "object",
+        properties: {
+          Authorization: { type: "string" },
+        },
+        required: ["session_token"],
+      },
     },
     "place-order": {
       type: "object",
       properties: {
-        // session_token: { type: "string" },
         master_id: { type: "string" },
         order_id: { type: "string" },
       },
-      required: [
-        // "session_token",
-        "master_id",
-        "order_id",
-      ],
+      required: ["master_id", "order_id"],
+      headers: {
+        type: "object",
+        properties: {
+          Authorization: { type: "string" },
+        },
+        required: ["session_token"],
+      },
     },
     "read-nassigned-order": {
       type: "object",
       properties: {
-        // session_token: { type: "string" },
         start: { type: "integer" },
         limit: { type: "integer" },
       },
-      // required: [
-      //   "session_token",
-      //   "start",
-      //   "limit",
-      // ],
+      required: ["start", "limit"],
+      headers: {
+        type: "object",
+        properties: {
+          Authorization: { type: "string" },
+        },
+        required: ["session_token"],
+      },
     },
   },
   admin: {
     "read-admins": {
       type: "object",
       properties: {
-        session_token: { type: "string" },
         start: { type: "integer" },
         limit: { type: "integer" },
       },
-      required: ["session_token"],
+      required: ["start", "limit"],
+      headers: {
+        type: "object",
+        properties: {
+          Authorization: { type: "string" },
+        },
+        required: ["session_token"],
+      },
     },
     "update-admin": {
       type: "object",
       properties: {
-        session_token: { type: "string" },
         password: { type: "string" },
       },
-      required: ["session_token", "password"],
+      required: ["password"],
+      headers: {
+        type: "object",
+        properties: {
+          Authorization: { type: "string" },
+        },
+        required: ["session_token"],
+      },
     },
   },
   user: {
     "read-users": {
       type: "object",
       properties: {
-        // session_token: { type: "string" },
         start: { type: "integer" },
         limit: { type: "integer" },
       },
-      // required: ["session_token"],
+      required: ["start", "limit"],
+      headers: {
+        type: "object",
+        properties: {
+          Authorization: { type: "string" },
+        },
+        required: ["session_token"],
+      },
     },
     "read-new-user": {
       type: "object",
       properties: {
-        // session_token: { type: "string" },
         start: { type: "integer" },
         limit: { type: "integer" },
       },
-      // required: ["session_token"],
-    },
-    "update-user": {
-      type: "object",
-      properties: {
-        session_token: { type: "string" },
-        password: { type: "string" },
+      required: ["start", "limit"],
+      headers: {
+        type: "object",
+        properties: {
+          Authorization: { type: "string" },
+        },
+        required: ["session_token"],
       },
-      required: ["session_token", "password"],
     },
-    "reg-user": {
-      type: "object",
-      properties: {
-        session_token: { type: "string" },
-        password: { type: "string" },
-      },
-      required: ["session_token", "password"],
-    },
+    // "update-user": {
+    //   type: "object",
+    //   properties: {
+    //     password: { type: "string" },
+    //   },
+    //   required: ["password"],
+    // },
+    // "reg-user": {
+    //   type: "object",
+    //   properties: {
+    //     password: { type: "string" },
+    //   },
+    //   required: ["password"],
+    // },
   },
 };

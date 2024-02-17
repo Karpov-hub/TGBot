@@ -1,8 +1,7 @@
+require("dotenv").config();
 const TelegramBot = require("node-telegram-bot-api");
 const db = require("./db/models/index");
-const { Op, where } = require("sequelize");
-const token = "6883415167:AAFQNSnFL-s73ORXuKuRnjRqlZw0Q7APzGY";
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(process.env.telegram_bot_token, { polling: true });
 
 let getDeposit = 0;
 let getAmount = 0;

@@ -1,6 +1,6 @@
 const db = require("../db/models/index");
 const { Op, where } = require("sequelize");
-const { sendOrderToMaster } = require("../telegramBot");
+// const { sendOrderToMaster } = require("../telegramBot");
 
 async function createOrder(req, res) {
   try {
@@ -32,56 +32,56 @@ async function readUnassignedOrders(req, res) {
   }
 }
 
-async function placeOrder(req, res) {
-  try {
-    const updatingOptions = {
-      assigned_master: req.body.master_id,
-    };
+// async function placeOrder(req, res) {
+//   try {
+//     const updatingOptions = {
+//       assigned_master: req.body.master_id,
+//     };
 
-    await db.order.update(updatingOptions, {
-      where: {
-        id: req.body.order_id,
-      },
-    });
+//     await db.order.update(updatingOptions, {
+//       where: {
+//         id: req.body.order_id,
+//       },
+//     });
 
-    // Получаем chat_id мастера, назначенного на заказ
-    const master = await db.user.findOne({
-      where: { id: req.body.master_id },
-      attributes: ["chat_id", "name", "surname"],
-    });
+//     // Получаем chat_id мастера, назначенного на заказ
+//     const master = await db.user.findOne({
+//       where: { id: req.body.master_id },
+//       attributes: ["chat_id", "name", "surname"],
+//     });
 
-    const order = await db.order.findOne({
-      where: { id: req.body.order_id },
-      attributes: [
-        "id",
-        "address",
-        "client_phone",
-        "meeting_time",
-        "brand",
-        "num_order",
-        "breakage_type",
-        "product_type",
-      ],
-    });
+//     const order = await db.order.findOne({
+//       where: { id: req.body.order_id },
+//       attributes: [
+//         "id",
+//         "address",
+//         "client_phone",
+//         "meeting_time",
+//         "brand",
+//         "num_order",
+//         "breakage_type",
+//         "product_type",
+//       ],
+//     });
 
-    // Если у мастера есть chat_id, отправляем ему сообщение
-    if (master && master.chat_id) {
-      await sendOrderToMaster(
-        master.chat_id,
-        master.name,
-        master.surname,
-        order
-      );
-    } else {
-      console.log("Не удалось отправить сообщение мастеру: chat_id не найден");
-    }
+//     // Если у мастера есть chat_id, отправляем ему сообщение
+//     if (master && master.chat_id) {
+//       await sendOrderToMaster(
+//         master.chat_id,
+//         master.name,
+//         master.surname,
+//         order
+//       );
+//     } else {
+//       console.log("Не удалось отправить сообщение мастеру: chat_id не найден");
+//     }
 
-    return res.send({ success: true });
-  } catch (err) {
-    console.error("Ошибка при создании заказа:", err);
-    return res.send({ success: false, err });
-  }
-}
+//     return res.send({ success: true });
+//   } catch (err) {
+//     console.error("Ошибка при создании заказа:", err);
+//     return res.send({ success: false, err });
+//   }
+// }
 
 async function readOrders(req, res) {
   try {
@@ -135,6 +135,6 @@ module.exports = {
   readOrders,
   updateOrder,
   deleteOrder,
-  placeOrder,
+  // placeOrder,
   readUnassignedOrders,
 };

@@ -7,12 +7,13 @@ const {
   regUser,
   // deleteUser,
 } = require("../controllers/userController");
+const { verifyToken } = require("./middleware"); // Подключаем middleware для проверки токена
 
 // router.post("/create-user", createUser);
-router.post("/read-users", readUsers);
-router.post("/read-new-user", readNewUsers);
-router.post("/update-user", updateUser);
-router.post("/reg-user", regUser);
+router.post("/read-users", verifyToken, readUsers);
+router.post("/read-new-user", verifyToken, readNewUsers);
+router.post("/update-user", verifyToken, updateUser);
+router.post("/reg-user", verifyToken, regUser);
 // router.post("/delete-user", deleteUser);
 
 module.exports = router;

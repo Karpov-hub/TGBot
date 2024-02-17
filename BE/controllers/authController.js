@@ -1,7 +1,11 @@
-const db = require("../db/models/index");
 const crypto = require("crypto");
-const redis = require("./redis");
-const config = require("./config");
+const db = require("@db/models/index");
+const {
+  createToken,
+  deleteToken,
+  refreshExpiry,
+  checkToken,
+} = require("@redisFun");
 
 async function signin(req, res) {
   let admin = await db.admin.findOne({
@@ -14,8 +18,7 @@ async function signin(req, res) {
     crypto.createHash("sha256").update(req.body.password).digest("base64") ==
     admin.password
   ) {
-    let session_token = crypto.randomBytes(30).toString("base64");
-    await redis.set(session_token, admin.get("id"), config.token_lifetime);
+    let session_token = await createToken(admin.id);
     return res.send({ success: true, session_token });
   } else {
     return res.send({ success: false, message: "Failed to authorize" });
@@ -24,7 +27,7 @@ async function signin(req, res) {
 
 async function changePassword(req, res) {
   try {
-    let id = await redis.get(req.body.session_token);
+    let id = await checkToken(req.headers.session_token);
 
     let admin = await db.admin.findOne({
       where: { id: id },
@@ -64,14 +67,14 @@ async function changePassword(req, res) {
 }
 
 async function refreshToken(req, res) {
-  if (await redis.get(req.body.session_token))
+  if (await refreshExpiry(req.headers.session_token))
     return res.send({ success: true });
   return res.send({ success: false });
 }
 
 async function logout(req, res) {
-  if (await redis.get(req.body.session_token)) {
-    await redis.del(req.body.session_token);
+  if (await checkToken(req.headers.session_token)) {
+    await deleteToken(req.headers.session_token);
     return res.send({ success: true });
   }
   return res.send({ success: false });
