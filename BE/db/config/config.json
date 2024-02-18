@@ -3,21 +3,22 @@
     "username": "hse",
     "password": "hse",
     "database": "tbdb",
-    "host": "127.0.0.1",
+    "host": "localhost",
+    "port": 5433,
     "dialect": "postgres"
   },
   "test": {
     "username": "hse",
     "password": "hse",
     "database": "tbdb",
-    "host": "127.0.0.1",
+    "host": "localhost",
     "dialect": "postgres"
   },
   "production": {
     "username": "hse",
     "password": "hse",
     "database": "tbdb",
-    "host": "127.0.0.1",
+    "host": "localhost",
     "dialect": "postgres"
   }
 }

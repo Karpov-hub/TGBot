@@ -5,6 +5,7 @@ const aliases = {
   "@controllers": path.resolve(__dirname, "controllers"),
   "@db": path.resolve(__dirname, "db"),
   "@redisFun": path.resolve(__dirname, "./redisFun"),
+  "@queue": path.resolve(__dirname, "./queue"),
   // и так далее
 };
 

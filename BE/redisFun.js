@@ -1,7 +1,7 @@
 const redis = require("redis");
 const crypto = require("crypto");
 const { promisify } = require("util");
-const { TOKEN_EXPIRY_SECONDS } = require("dotenv").config();
+require("dotenv").config();
 
 // Подключение к Redis
 const client = redis.createClient({
@@ -20,7 +20,7 @@ async function createToken(userId) {
   try {
     const token = crypto.randomBytes(30).toString("base64"); // Замените эту строку на ваш код генерации токена
     await setAsync(token, userId);
-    await expireAsync(token, TOKEN_EXPIRY_SECONDS);
+    await expireAsync(token, process.env.TOKEN_EXPIRY_SECONDS);
     return token;
   } catch (error) {
     console.error("Ошибка при создании токена:", error);
